@@ -1,4 +1,14 @@
 import javax.swing.*;
+import javax.swing.text.AbstractDocument;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DocumentFilter;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.sql.*;
 
 public class ventanaF {
     private JLabel JFarmacia;
@@ -18,8 +28,98 @@ public class ventanaF {
     private JButton botonBorrar;
     private JButton botonActualizar;
     private JButton botonCrear;
+    private JPanel panel;
 
-    private void createUIComponents() {
-        // TODO: place custom component creation code here
+    PreparedStatement ps;
+    Statement st;
+
+
+
+    public ventanaF(){
+        botonActualizar.setEnabled(false);
+        botonBorrar.setEnabled(false);
+
+
+        botonCrear.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                botonActualizar.setEnabled(true);
+                botonBorrar.setEnabled(true);
+                botonBuscar.setEnabled(true);
+                Connection con;
+
+
+                try{
+                    con = getConection();
+                    ps = con.prepareStatement("INSERT INTO productos (Id_Clie, Nom_Clie, Cant_Clie, Dir_Clie) VALUES(?,?,?,?) ");
+
+                    ps.setString(1, txtCedula.getText());
+                    ps.setString(2, txtNombreC.getText());
+                    ps.setString(3, txtCantidad.getText());
+                    ps.setString(4, txtDireccion.getText());
+                    System.out.println(ps);//imprimo en consola para verificación
+
+                    int res = ps.executeUpdate();
+
+                    if (res > 0) {
+                        JOptionPane.showMessageDialog(null, "Persona Guardada");
+                    } else {
+                        JOptionPane.showMessageDialog(null, "Error al Guardar persona");
+                    }
+
+                    con.close();//importante!!!!
+
+                }catch (HeadlessException | SQLException f) {
+                    System.err.println(f);
+                }
+            }
+        });
+
+        botonBuscar.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Connection con;
+
+                try{
+                    con = getConection();
+                    st = con.createStatement();
+                    ResultSet rs;
+                    rs=st.executeQuery("select * from farmacia.productos where Id_Clie="+txtCedula.getText()+";");
+                    while (rs.next()){
+                        txtNombreC.setText(rs.getString("Nom_Clie"));
+                        txtCantidad.setText(rs.getString("Cant_Clie"));
+                        txtDireccion.setText(rs.getString("Dir_Clie"));
+                    }
+                }catch (Exception s){
+
+                }
+            }
+        });
+
+    }
+
+    public static Connection getConection() {
+        Connection con = null;
+        String base = "farmacia"; //Nombre de la base de datos
+        String url = "jdbc:mysql://localhost:3306/" + base; //Direccion, puerto y nombre de la Base de Datos
+        String user = "root"; //Usuario de Acceso a MySQL
+        String password = "Wilson08"; //Password del usuario
+
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            con = DriverManager.getConnection(url, user, password);
+        } catch (ClassNotFoundException | SQLException e) {
+            System.err.println(e);
+        }
+        return con;
+    }
+
+    public static void main(String[] args) {
+        JFrame frame = new JFrame("insert");
+        frame.setContentPane(new ventanaF().panel );
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.pack();
+        frame.setSize(800,500);
+        frame.setVisible(true);
     }
 }
